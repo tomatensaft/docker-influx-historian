@@ -25,5 +25,9 @@ _Libraries/
 _ModuleInstall/
 
 # more ignore - all data and log folders
-/data
-/log
+grafana/data/*
+grafana/log/*
+influxdb2/data/*
+influxdb2/config/*
+mosquitto/log/*
+mosquitto/data/*

@@ -283,6 +283,7 @@ historian_delete_data() {
         [ ! -z ${DOCKER_INFLUXDB_VOLUME} ]; then
             printf "delete filed in ${DOCKER_INFLUXDB_VOLUME}\n"
             rm -r ${DOCKER_INFLUXDB_VOLUME}/data/*
+            rm -r ${DOCKER_INFLUXDB_VOLUME}/config/*
     fi
 
     #remove grafana data
