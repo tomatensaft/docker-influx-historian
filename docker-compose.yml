@@ -1,0 +1,50 @@
+version: "3"
+
+services:
+  eclipse-mosquitto:
+    container_name: eclipse-mosquitto
+    image: eclipse-mosquitto:latest
+    env_file:
+      - "./docker-compose.env"
+    restart: unless-stopped
+    ports:
+      - "${DOCKER_MQTT_BROKER_PORT}:${DOCKER_MQTT_BROKER_PORT}"
+      - "${DOCKER_MQTT_WEBSOCKET_PORT}:${DOCKER_MQTT_WEBSOCKET_PORT}"
+    volumes:
+      - "${DOCKER_MQTT_VOLUME}/config/${DOCKER_MQTT_CONFIGFILE}:/mosquitto/config/mosquitto.conf"
+      - "${DOCKER_MQTT_VOLUME}/data:/mosquitto/data"
+      - "${DOCKER_MQTT_VOLUME}/log:/mosquitto/log"
+    
+  influxdb2:
+    container_name: influxdb2
+    image: influxdb:latest
+    env_file:
+      - "./docker-compose.env"
+    restart: unless-stopped
+    ports:
+      - "${DOCKER_INFLUXDB_PORT}:${DOCKER_INFLUXDB_PORT}"
+    volumes:
+      - "${DOCKER_INFLUXDB_VOLUME}/data}:/var/lib/influxdb2"
+      - "${DOCKER_INFLUXDB_VOLUME}/config}:/etc/influxdb2"
+      
+  telegraf:
+    container_name: telegraf
+    image: telegraf:latest
+    env_file:
+      - "./docker-compose.env"
+    depends_on:
+      - influxdb2
+    volumes:
+      - "${DOCKER_TELEGRAF_VOLUME}/config/${DOCKER_TELEGRAF_CONFIGFILE}:/etc/telegraf/telegraf.conf:ro"
+    
+  grafana:
+    container_name: grafana
+    image: grafana/grafana-enterprise
+    env_file:
+      - ./docker-compose.env
+    restart: unless-stopped
+    ports:
+      - "${DOCKER_GRAFANA_PORT}:${DOCKER_GRAFANA_PORT}"
+    volumes:
+      - "${DOCKER_GRAFANA_VOLUME}/data:/var/lib/grafana"
+

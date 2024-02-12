@@ -23,3 +23,7 @@ _Boot/
 _CompileInfo/
 _Libraries/
 _ModuleInstall/
+
+# more ignore - all data and log folders
+/data
+/log
