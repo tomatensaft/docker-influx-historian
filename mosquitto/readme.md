@@ -4,5 +4,5 @@
 
 subscrbe to topic
 ```
-mosquitto_sub -h localhost -t \historizeData -d
+mosquitto_sub -h localhost -t \# -d
 ```

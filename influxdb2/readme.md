@@ -1,5 +1,6 @@
 ## influxdbv2
 
-### local folder for influxdbv2
+### local host folders for influxdbv2 container
 
-auto createt data from docker compose
+* `config` for internal configuration files
+* `data` path for database files

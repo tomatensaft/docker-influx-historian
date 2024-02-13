@@ -5,7 +5,7 @@ services:
     container_name: eclipse-mosquitto
     image: eclipse-mosquitto:latest
     env_file:
-      - "./docker-compose.env"
+      - ./.env
     restart: unless-stopped
     ports:
       - "${DOCKER_MQTT_BROKER_PORT}:${DOCKER_MQTT_BROKER_PORT}"
@@ -19,19 +19,21 @@ services:
     container_name: influxdb2
     image: influxdb:latest
     env_file:
-      - "./docker-compose.env"
+      - ./.env
+    depends_on:
+      - eclipse-mosquitto
     restart: unless-stopped
     ports:
       - "${DOCKER_INFLUXDB_PORT}:${DOCKER_INFLUXDB_PORT}"
     volumes:
-      - "${DOCKER_INFLUXDB_VOLUME}/data}:/var/lib/influxdb2"
-      - "${DOCKER_INFLUXDB_VOLUME}/config}:/etc/influxdb2"
+      - "${DOCKER_INFLUXDB_VOLUME}/data:/var/lib/influxdb2"
+      - "${DOCKER_INFLUXDB_VOLUME}/config:/etc/influxdb2"
       
   telegraf:
     container_name: telegraf
     image: telegraf:latest
     env_file:
-      - "./docker-compose.env"
+      - ./.env
     depends_on:
       - influxdb2
     volumes:
@@ -41,7 +43,9 @@ services:
     container_name: grafana
     image: grafana/grafana-enterprise
     env_file:
-      - ./docker-compose.env
+      - ./.env
+    depends_on:
+      - influxdb2
     restart: unless-stopped
     ports:
       - "${DOCKER_GRAFANA_PORT}:${DOCKER_GRAFANA_PORT}"

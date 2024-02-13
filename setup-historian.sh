@@ -8,7 +8,7 @@ printf "setup docker historian...\n"
 
 #load enviroment variables
 printf "load environment variables...\n"
-. ./docker-compose.env
+. ./.env
 
 #print verion
 printf "version of historian setup ${DOCKER_GENERAL_VERSION}\n"
@@ -77,7 +77,7 @@ main() {
             --help | --info | *)
                 printf  "usage:\n \
                         test:      test command\n \
-                        settp:     create historian\n \
+                        setup:     create historian\n \
                         start:     start historian\n \
                         delete:    delete historian\n \
                         config:    create config files\n \
@@ -134,16 +134,22 @@ docker_check_state() {
 #docker compose reset
 docker_compose_reset() {
     printf "docker compose reset\n"
+
+    docker compose restart
 }
 
 #docker compose stop
 docker_compose_stop() {
     printf "docker compose stop\n"
+
+    docker compose stop
 }
 
 #docker compose start
 docker_compose_start() {
     printf "docker compose start\n"
+
+    docker compose start
 }
 
 #setup docker

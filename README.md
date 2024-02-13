@@ -4,11 +4,14 @@ docker based influx historian / grafana  application
 # historize data from twincat plc with mqtt and influxdbv2
 
 * install docker for linux or wsl
-* adjust environment settings for and `docker-compose.env`
-* test configuration with `setup-historian.sh`
+* adjust environment settings for and `.env`
+* test configuration with `setup-historian.sh --test`
+* generate config files and missing folders `setup-historian.sh --config`
 * docker compose configuration you will find `docker-compose.yml` 
-
-## usage of `setup-historian.sh`
+* influxdb (e.g. http://localhost:8086) login you find in `.env`
+* grafana (e.g. http://localhost:3000) inital login admin/admin
+* 
+### usage of `setup-historian.sh`
 
 * setup docker container for testing
   - `setup-historian.sh --setup`
