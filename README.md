@@ -11,7 +11,7 @@ docker based influx historian / grafana  application
 * docker compose configuration you will find `docker-compose.yml` 
 * influxdb (e.g. http://localhost:8086) login you find in `.env`
 * grafana (e.g. http://localhost:3000) inital login admin/admin
-* 
+
 ### usage of `setup-historian.sh`
 
 * setup docker container for testing
