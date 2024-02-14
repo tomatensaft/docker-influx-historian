@@ -1,7 +1,8 @@
-# docker-influx-historian
+# docker-influx-historian :whale:
+
 docker based influx historian / grafana  application
 
-# historize data from twincat plc with mqtt and influxdbv2
+### historize data from twincat plc with mqtt and influxdbv2
 
 * install docker for linux or wsl
 * adjust environment settings for and `.env`

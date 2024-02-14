@@ -21,7 +21,8 @@ services:
     env_file:
       - ./.env
     depends_on:
-      - eclipse-mosquitto
+      eclipse-mosquitto:
+        condition: service_started
     restart: unless-stopped
     ports:
       - "${DOCKER_INFLUXDB_PORT}:${DOCKER_INFLUXDB_PORT}"
@@ -35,7 +36,10 @@ services:
     env_file:
       - ./.env
     depends_on:
-      - influxdb2
+      influxdb2:
+        condition: service_started
+      eclipse-mosquitto:
+        condition: service_started  
     volumes:
       - "${DOCKER_TELEGRAF_VOLUME}/config/${DOCKER_TELEGRAF_CONFIGFILE}:/etc/telegraf/telegraf.conf:ro"
     
@@ -45,7 +49,8 @@ services:
     env_file:
       - ./.env
     depends_on:
-      - influxdb2
+      influxdb2:
+        condition: service_started
     restart: unless-stopped
     ports:
       - "${DOCKER_GRAFANA_PORT}:${DOCKER_GRAFANA_PORT}"
