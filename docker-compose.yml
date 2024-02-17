@@ -39,7 +39,8 @@ services:
       influxdb2:
         condition: service_started
       eclipse-mosquitto:
-        condition: service_started  
+        condition: service_started
+    restart: unless-stopped  
     volumes:
       - "${DOCKER_TELEGRAF_VOLUME}/config/${DOCKER_TELEGRAF_CONFIGFILE}:/etc/telegraf/telegraf.conf:ro"
     
