@@ -41,6 +41,9 @@ historize data from twincat plc with mqtt and influxdbv2
 * state of docker container
   - `setup-historian.sh --state`
 
+## resources
+* debug for [tests](debug/)
+
 ## tests
 * not testet completly
 
