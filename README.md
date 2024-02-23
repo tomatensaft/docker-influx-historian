@@ -4,13 +4,13 @@
 
 historize data from twincat plc with mqtt and influxdbv2
 
-## contents
+## contents :clipboard:
 * [installation](#installation)
 * [usage](#usage)
 * [tests](#tests)
 * [version](#version)
 
-## installation
+## installation :floppy_disk:
 * install docker for linux or wsl
 * adjust environment settings for and `.env`
 * test configuration with `setup-historian.sh --test`
@@ -19,7 +19,7 @@ historize data from twincat plc with mqtt and influxdbv2
 * influxdb (e.g. http://localhost:8086) login you find in `.env`
 * grafana (e.g. http://localhost:3000) inital login admin/admin
 
-## usage
+## usage  :zap:
 * setup docker container for testing
   - `setup-historian.sh --setup`
 
@@ -41,12 +41,18 @@ historize data from twincat plc with mqtt and influxdbv2
 * state of docker container
   - `setup-historian.sh --state`
 
-## resources
-* debug for [tests](debug/)
+## resources :bookmark:
+* debug examples [debug](debug/)
+* grafana files [grafana](grafana/)
+* influxdb2 files[influxdb2](influxdb2/)
+* mosquitto files [mosquitto](mosquitto/)
+* telegraf files [telegraf](telegraf/)
+* twincat program [twincat](twincat/)
+* wsl windows linux subsystem [wsl](wsl/)
 
-## tests
+## tests :fire:
 * not testet completly
 
-## version
+## version :tomato:
 * 0.1
   - init document
