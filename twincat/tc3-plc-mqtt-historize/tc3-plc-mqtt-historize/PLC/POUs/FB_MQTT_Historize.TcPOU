@@ -1,0 +1,254 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_MQTT_Historize" Id="{384eab69-3723-4ef6-8b5d-6693a8617557}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MQTT_Historize
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+
+//MQTT connection	
+	fbMqttClient 					: FB_IotMqttClient;										//mqtt client
+	bSetParameter 					: BOOL := TRUE;										//set parameter
+	bConnect 						: BOOL := TRUE;										//connect to broker
+	hrErrorOccurred 				: HRESULT;											//error ococured
+	sTopicPubFast	 				: STRING(255) := 'historizeData/historizeFast';		//topic publich
+	sTopicPubMiddle	 				: STRING(255) := 'historizeData/historizeMiddle';	//topic publich
+	sTopicPubSlow	 				: STRING(255) := 'historizeData/historizeSlow';		//topic publich
+	sPayloadPubFast					: STRING(1000);										//payload publish
+	sPayloadPubMiddle				: STRING(1000);										//payload publish
+	sPayloadPubSlow					: STRING(1000);										//payload publish
+	fbMessageQueue 					: FB_IotMqttMessageQueue;							//message queue
+	fbMessage 						: FB_IotMqttMessage;								//mqtt messaege
+	{attribute 'TcEncoding':='UTF-8'}	
+	sTopicRcv : STRING(255);															//topic received
+	{attribute 'TcEncoding':='UTF-8'}
+	sPayloadRcv : STRING(255);															//payload received
+	
+//json document
+	fbJsonFast      					: FB_JsonSaxWriter;			//json sax write for payload
+	fbJsonMiddle      					: FB_JsonSaxWriter;			//json sax write for payload
+	fbJsonSlow  	   					: FB_JsonSaxWriter;			//json sax write for payload
+
+//unix timestamp creation
+	unixTime: FB_UnixTimestamp;									//create unit timestamp
+    timestampSeconds: ULINT;									//unix timestamp second
+    timestampMilliseconds: ULINT;								//unix timestamp milliseconds
+	
+//update timers	
+	tonUpdateFast: TON;											//timer update data fast
+	tonUpdateSlow: TON;											//timer update data slow
+	tonUpdateMiddle: TON;
+	
+//value simulation	
+	fbSimValues:FB_Values;										//simulate values
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*
+
+-historize data with mqtt/telegraf/influxdb
+
+*)
+
+
+//simulate values
+fbSimValues();
+
+//generate unix time
+unixTime(ulSeconds=> timestampSeconds, ulMilliseconds=>timestampMilliseconds );
+
+
+//init connection parameter
+IF bSetParameter THEN
+	bSetParameter := FALSE;
+	
+	//broker settings for mosquitto w/o sec
+	fbMqttClient.sHostName:= '192.168.1.50';
+	fbMqttClient.nHostPort:= 1883;
+	fbMqttClient.sClientId:= 'MqttHistorianPlcClient'; 
+
+	fbMqttClient.ipMessageQueue := fbMessageQueue;
+END_IF
+
+//excute connect
+fbMqttClient.Execute(bConnect);
+
+//check error
+IF fbMqttClient.bError THEN
+	// add your error logging here
+	hrErrorOccurred := fbMqttClient.hrErrorCode;
+END_IF
+
+//check queue messages
+IF fbMessageQueue.nQueuedMessages > 0 THEN
+	IF fbMessageQueue.Dequeue(fbMessage:=fbMessage) THEN
+		fbMessage.GetTopic(pTopic:=ADR(sTopicRcv), nTopicSize:=SIZEOF(sTopicRcv) );
+		fbMessage.GetPayload(pPayload:=ADR(sPayloadRcv), nPayloadSize:=SIZEOF(sPayloadRcv), bSetNullTermination:=FALSE);
+	END_IF
+END_IF
+
+//cyclic update
+tonUpdateFast(IN:=NOT tonUpdateFast.Q , PT:=T#250MS);
+tonUpdateMiddle(IN:=NOT tonUpdateMIddle.Q , PT:=T#1S);
+tonUpdateSlow(IN:=NOT tonUpdateSlow.Q , PT:=T#10S);
+
+
+//publish fast values
+IF fbMqttClient.bConnected  THEN
+	
+		//build JsonDoc
+		BuildJsonDoc();	
+		
+		//send data fast
+		IF tonUpdateFast.Q THEN
+			//publish Values
+			fbMqttClient.Publish(	sTopic:= sTopicPubFast, 
+									pPayload:= ADR(sPayloadPubFast), nPayloadSize:= LEN2(ADR(sPayloadPubFast)), 
+									eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );
+		END_IF
+		
+		//send data middle
+		IF tonUpdateMiddle.Q THEN
+			//publish Values
+			fbMqttClient.Publish(	sTopic:= sTopicPubMiddle, 
+									pPayload:= ADR(sPayloadPubMiddle), nPayloadSize:= LEN2(ADR(sPayloadPubMIddle)), 
+									eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );
+		END_IF
+				
+
+		//send data slow
+		IF tonUpdateSlow.Q THEN
+			//publish Values
+			fbMqttClient.Publish(	sTopic:= sTopicPubSlow, 
+									pPayload:= ADR(sPayloadPubSlow), nPayloadSize:= LEN2(ADR(sPayloadPubSlow)), 
+									eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );
+		END_IF
+				
+		//check pub erorrs						
+		IF fbMqttClient.bError THEN
+				// add your error logging here			
+				hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+		
+		
+END_IF
+
+]]></ST>
+    </Implementation>
+    <Method Name="BuildJsonDoc" Id="{e717c91c-5b88-472b-a25b-6e7c715c7586}">
+      <Declaration><![CDATA[METHOD BuildJsonDoc : BOOL
+VAR_INPUT
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*
+
+-generate JSON String
+
+*)
+
+		//generate fast json
+		fbJsonFast.ResetDocument();
+		fbJsonFast.SetMaxDecimalPlaces(2);	
+		fbJsonFast.StartObject();
+		fbJsonFast.AddKey('Timestamp');
+		fbJsonFast.AddUlint(timestampMilliseconds);
+		fbJsonFast.AddKeyLreal('Value01', fbSimValues.CosineSlow);
+		fbJsonFast.AddKeyLreal('Value02', fbSimValues.sineSlow + 10);
+		fbJsonFast.AddKeyLreal('Value03', fbSimValues.CosineSlow - 10);
+		fbJsonFast.AddKeyLreal('Value04', fbSimValues.sineSlow + 20);
+		fbJsonFast.AddKeyLreal('Value05', fbSimValues.CosineSlow - 20);
+		fbJsonFast.AddKeyLreal('Value06', fbSimValues.sineSlow + 30);
+		fbJsonFast.AddKeyLreal('Value07', fbSimValues.TriangleSlow);
+		fbJsonFast.AddKeyLreal('Value08', fbSimValues.CosineSlow + 5);
+		fbJsonFast.AddKeyLreal('Value09', fbSimValues.TriangleSlow + 3);
+		fbJsonFast.AddKeyLreal('Value10', fbSimValues.CosineSlow + 6);
+		fbJsonFast.EndObject();	
+		fbJsonFast.CopyDocument(sPayloadPubFast, fbJsonFast.GetDocumentLength());
+		
+		
+		
+		//generate middle json
+		fbJsonMIddle.ResetDocument();
+		fbJsonMIddle.SetMaxDecimalPlaces(2);	
+		fbJsonMIddle.StartObject();
+		fbJsonMIddle.AddKey('Timestamp');
+		fbJsonMIddle.AddUlint(timestampMilliseconds);
+		fbJsonMIddle.AddKeyLreal('Value01', fbSimValues.CosineSlow);
+		fbJsonMIddle.AddKeyLreal('Value02', fbSimValues.sineSlow + 10);
+		fbJsonMIddle.AddKeyLreal('Value03', fbSimValues.CosineSlow - 10);
+		fbJsonMIddle.AddKeyLreal('Value04', fbSimValues.sineSlow + 20);
+		fbJsonMIddle.AddKeyLreal('Value05', fbSimValues.CosineSlow - 20);
+		fbJsonMIddle.AddKeyLreal('Value06', fbSimValues.sineSlow + 30);
+		fbJsonMIddle.AddKeyLreal('Value07', fbSimValues.TriangleSlow);
+		fbJsonMIddle.AddKeyLreal('Value08', fbSimValues.CosineSlow + 5);
+		fbJsonMIddle.AddKeyLreal('Value09', fbSimValues.TriangleSlow + 3);
+		fbJsonMIddle.AddKeyLreal('Value10', fbSimValues.CosineSlow + 6);
+		fbJsonMIddle.EndObject();	
+		fbJsonMIddle.CopyDocument(sPayloadPubMIddle, fbJsonMIddle.GetDocumentLength());
+		
+		
+		//generate Slow json
+		fbJsonSlow.ResetDocument();
+		fbJsonSlow.SetMaxDecimalPlaces(2);	
+		fbJsonSlow.StartObject();
+		fbJsonSlow.AddKey('Timestamp');
+		fbJsonSlow.AddUlint(timestampMilliseconds);
+		fbJsonSlow.AddKeyLreal('Value01', fbSimValues.CosineSlow);
+		fbJsonSlow.AddKeyLreal('Value02', fbSimValues.sineSlow + 10);
+		fbJsonSlow.AddKeyLreal('Value03', fbSimValues.CosineSlow - 10);
+		fbJsonSlow.AddKeyLreal('Value04', fbSimValues.sineSlow + 20);
+		fbJsonSlow.AddKeyLreal('Value05', fbSimValues.CosineSlow - 20);
+		fbJsonSlow.AddKeyLreal('Value06', fbSimValues.sineSlow + 30);
+		fbJsonSlow.AddKeyLreal('Value07', fbSimValues.TriangleSlow);
+		fbJsonSlow.AddKeyLreal('Value08', fbSimValues.CosineSlow + 5);
+		fbJsonSlow.AddKeyLreal('Value09', fbSimValues.TriangleSlow + 3);
+		fbJsonSlow.AddKeyLreal('Value10', fbSimValues.CosineSlow + 6);
+		fbJsonSlow.EndObject();	
+		fbJsonSlow.CopyDocument(sPayloadPubSlow, fbJsonSlow.GetDocumentLength());]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_MQTT_Historize">
+      <LineId Id="356" Count="44" />
+      <LineId Id="466" Count="0" />
+      <LineId Id="401" Count="11" />
+      <LineId Id="414" Count="2" />
+      <LineId Id="418" Count="0" />
+      <LineId Id="469" Count="0" />
+      <LineId Id="471" Count="5" />
+      <LineId Id="470" Count="0" />
+      <LineId Id="419" Count="0" />
+      <LineId Id="486" Count="6" />
+      <LineId Id="485" Count="0" />
+      <LineId Id="484" Count="0" />
+      <LineId Id="420" Count="8" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MQTT_Historize.BuildJsonDoc">
+      <LineId Id="18" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="37" Count="1" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="22" Count="1" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="30" Count="1" />
+      <LineId Id="33" Count="1" />
+      <LineId Id="48" Count="8" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="105" Count="16" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="122" Count="1" />
+      <LineId Id="125" Count="16" />
+      <LineId Id="124" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

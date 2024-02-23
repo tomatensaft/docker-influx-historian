@@ -1,0 +1,199 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Values" Id="{0deb296a-535b-41f4-ae81-dd6782819b37}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Values
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+
+//Function Blocks	
+	fbSineFast:GEN;
+	fbCosineFast:GEN;
+	fbTriangleFast:GEN;
+	fbSineSlow:GEN;
+	fbCosineSlow:GEN;
+	fbTriangleSlow:GEN;
+	
+//FB Outputs
+	iSineFast: INT;
+	iCosineFast: INT;
+	iTriangleFast: INT;
+	iSineSlow: INT;
+	iCosineSlow: INT;
+	iTriangleSlow: INT;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*
+-signal generator
+
+*)
+
+//sine fast
+fbSineFast(
+	MODE:=SINE , 
+	BASE:=TRUE , 
+	PERIOD:=T#500MS , 
+	CYCLES:= , 
+	AMPLITUDE:=100 , 
+	RESET:= , 
+	OUT=>iSineFast );
+	
+//cosine
+fbCoSineFast(
+	MODE:=COSINE , 
+	BASE:=TRUE , 
+	PERIOD:=T#600MS , 
+	CYCLES:= , 
+	AMPLITUDE:=100 , 
+	RESET:= , 
+	OUT=>iCosineFast );
+
+//triangular
+fbTriangleFast(
+	MODE:=TRIANGLE , 
+	BASE:=TRUE , 
+	PERIOD:=T#700MS , 
+	CYCLES:= , 
+	AMPLITUDE:=200 , 
+	RESET:= , 
+	OUT=>iTriangleFast );
+
+
+//sine
+fbSineSlow(
+	MODE:=SINE , 
+	BASE:=TRUE , 
+	PERIOD:=T#5S , 
+	CYCLES:= , 
+	AMPLITUDE:=100 , 
+	RESET:= , 
+	OUT=>iSineSlow );
+	
+//cosine
+fbCoSineSlow(
+	MODE:=COSINE , 
+	BASE:=TRUE , 
+	PERIOD:=T#6S , 
+	CYCLES:= , 
+	AMPLITUDE:=100 , 
+	RESET:= , 
+	OUT=>iCosineSlow );
+
+//triangular
+fbTriangleSlow(
+	MODE:=TRIANGLE , 
+	BASE:=TRUE , 
+	PERIOD:=T#7S , 
+	CYCLES:= , 
+	AMPLITUDE:=200 , 
+	RESET:= , 
+	OUT=>iTriangleSlow );	]]></ST>
+    </Implementation>
+    <Property Name="CosineFast" Id="{45d31ca9-f4d8-417d-a9fd-bb2021eacf8d}">
+      <Declaration><![CDATA[PROPERTY CosineFast : REAL]]></Declaration>
+      <Get Name="Get" Id="{b6ae8773-e956-431f-a78d-a68971aabb84}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CosineFast:=TO_REAL(iCosineFast);
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="CosineSlow" Id="{a9ffcf1f-8127-4bf6-8d59-afb12b3c3b6b}">
+      <Declaration><![CDATA[PROPERTY CosineSlow : REAL]]></Declaration>
+      <Get Name="Get" Id="{4f837de8-f215-45f7-880c-7eb889986798}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CosineSlow:=TO_REAL(iCosineSlow);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="SineFast" Id="{3418f0cc-bf0f-4bbf-bcaa-3af1a5d7d96f}">
+      <Declaration><![CDATA[PROPERTY SineFast : REAL]]></Declaration>
+      <Get Name="Get" Id="{09a65b4e-70a0-46e6-8e5c-088053ad08d7}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[SineFast:=TO_REAL(iSineFast);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="SineSlow" Id="{607627a6-ee98-4692-9f2c-c4367c0e3e8f}">
+      <Declaration><![CDATA[PROPERTY SineSlow : REAL]]></Declaration>
+      <Get Name="Get" Id="{e6432fee-33a8-40de-9758-351a59874280}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[SineSlow:=TO_REAL(iSineFast);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="TriangleFast" Id="{39382217-9318-4601-a5ab-536bdfa91965}">
+      <Declaration><![CDATA[PROPERTY TriangleFast : REAL]]></Declaration>
+      <Get Name="Get" Id="{31b48053-0934-454a-97eb-8167c798e0a5}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[TriangleFast:=TO_REAL(iTriangleFast);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="TriangleSlow" Id="{fc6336e7-2a62-440b-9ded-32d08b7ab683}">
+      <Declaration><![CDATA[PROPERTY TriangleSlow : REAL]]></Declaration>
+      <Get Name="Get" Id="{2ad2021c-f05a-49dd-b3b4-c5bf35b1738d}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[TriangleSlow:=TO_REAL(iTriangleSlow);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <LineIds Name="FB_Values">
+      <LineId Id="24" Count="0" />
+      <LineId Id="26" Count="1" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="10" Count="6" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="30" Count="7" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="39" Count="8" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="59" Count="29" />
+      <LineId Id="58" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Values.CosineFast.Get">
+      <LineId Id="2" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Values.CosineSlow.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Values.SineFast.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Values.SineSlow.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Values.TriangleFast.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Values.TriangleSlow.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

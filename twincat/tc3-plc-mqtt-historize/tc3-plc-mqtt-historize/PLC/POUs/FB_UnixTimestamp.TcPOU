@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_UnixTimestamp" Id="{89bc1fc1-a081-4ec1-83e9-e48ee3750f8a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_UnixTimestamp
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+	ulSeconds: ULINT;		//Seconds
+    ulMilliseconds: ULINT;	///Milliseconds
+END_VAR
+VAR
+	fbLocalSystemTime : FB_LocalSystemTime;
+    fbGetTimeZoneInformation : FB_GetTimeZoneInformation;
+    stTimeZoneInformation : ST_TimeZoneInformation;
+    fbTzSpecificLocalTimeToFileTime : FB_TzSpecificLocalTimeToFileTime;
+    tFileTime: T_FILETIME;
+    onZerothSecondLastCycle : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*
+
+-convert to unix timestamp
+https://stackoverflow.com/questions/41773732/how-do-i-get-the-unix-timestamp-in-twincat3
+
+*)
+
+// Get local system time
+fbLocalSystemTime(bEnable:=TRUE, dwCycle:=1);
+
+// On the zeroth second of each minutesync timezone information
+IF (stTimeZoneInformation.standardName = '' OR (fbLocalSystemTime.systemTime.wSecond = 0 AND NOT onZerothSecondLastCycle)) THEN
+    fbGetTimeZoneInformation(sNetID := '', bExecute := TRUE, tzInfo => stTimeZoneInformation);
+END_IF;
+
+//convert to unix timestamp
+fbTzSpecificLocalTimeToFileTime(in := Tc2_Utilities.SYSTEMTIME_TO_FILETIME(fbLocalSystemTime.systemTime), tzInfo := stTimeZoneInformation, out => tFileTime);
+ulSeconds := (SHL(DWORD_TO_ULINT(tFileTime.dwHighDateTime), 32) + DWORD_TO_ULINT(tFileTime.dwLowDateTime)) / 10000000 - 11644473600;
+ulMilliseconds := (SHL(DWORD_TO_ULINT(tFileTime.dwHighDateTime), 32) + DWORD_TO_ULINT(tFileTime.dwLowDateTime)) / 10000 - 11644473600000;
+
+onZerothSecondLastCycle := fbLocalSystemTime.systemTime.wSecond = 0;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_UnixTimestamp">
+      <LineId Id="186" Count="0" />
+      <LineId Id="191" Count="0" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="192" Count="0" />
+      <LineId Id="190" Count="0" />
+      <LineId Id="188" Count="0" />
+      <LineId Id="187" Count="0" />
+      <LineId Id="173" Count="12" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

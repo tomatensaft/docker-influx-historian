@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="MAIN" Id="{710da5f9-72ac-45bb-9314-a4218799ad50}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+	
+
+//runtime counter
+	iCounter: INT;
+	
+//historize data
+	fbMqttHistorize:FB_MQTT_Historize;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*
+
+-Test MQTT history values
+
+*)
+
+iCounter := iCounter +1;
+
+
+fbMqttHistorize();
+]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="14" Count="9" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
