@@ -1,8 +1,16 @@
 # docker-influx-historian :whale:
 
-docker based influx historian / grafana  application
+## docker based influx historian / grafana  application
 
-### historize data from twincat plc with mqtt and influxdbv2
+historize data from twincat plc with mqtt and influxdbv2
+
+## table of contents
+* [installation](#installation)
+* [usage](#usage)
+* [tests](#tests)
+* [version](#version)
+
+## installation
 
 * install docker for linux or wsl
 * adjust environment settings for and `.env`
@@ -12,7 +20,7 @@ docker based influx historian / grafana  application
 * influxdb (e.g. http://localhost:8086) login you find in `.env`
 * grafana (e.g. http://localhost:3000) inital login admin/admin
 
-### usage of `setup-historian.sh`
+## usage
 
 * setup docker container for testing
   - `setup-historian.sh --setup`
@@ -34,3 +42,12 @@ docker based influx historian / grafana  application
 
 * state of docker container
   - `setup-historian.sh --state`
+
+## tests
+
+* not testet completly
+
+## version
+
+* 0.1
+  - init document
