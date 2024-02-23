@@ -4,14 +4,13 @@
 
 historize data from twincat plc with mqtt and influxdbv2
 
-## table of contents
+## contents
 * [installation](#installation)
 * [usage](#usage)
 * [tests](#tests)
 * [version](#version)
 
 ## installation
-
 * install docker for linux or wsl
 * adjust environment settings for and `.env`
 * test configuration with `setup-historian.sh --test`
@@ -21,7 +20,6 @@ historize data from twincat plc with mqtt and influxdbv2
 * grafana (e.g. http://localhost:3000) inital login admin/admin
 
 ## usage
-
 * setup docker container for testing
   - `setup-historian.sh --setup`
 
@@ -44,10 +42,8 @@ historize data from twincat plc with mqtt and influxdbv2
   - `setup-historian.sh --state`
 
 ## tests
-
 * not testet completly
 
 ## version
-
 * 0.1
   - init document
