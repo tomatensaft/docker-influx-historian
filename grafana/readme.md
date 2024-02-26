@@ -1,8 +1,7 @@
 ## grafana
-
+grafana part with a short commissioning tutorial
 
 ### setup grafana
-
 * open `http://localhost:3000` and login with admin/admin 
 * change password
 * navigate to `data sources`
@@ -15,7 +14,6 @@
 * save and test configuration
 
 ### add data to graph
-
 * create new dashboard
 * extract query from querybuilder of influxdb2 webinterface
 * save dashboard
