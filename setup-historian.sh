@@ -1,73 +1,81 @@
-#!/bin/sh
-#SPDX-License-Identifier: MIT
+##!/bin/sh
 
-# set -x
+#set -x
 
-#print header
-printf "setup docker historian...\n"
+# set absolute path of root app for global use
+SCRIPT_ROOT_PATH=$(pwd)
 
-#load enviroment variables
-printf "load environment variables...\n"
-. ./.env
-
-#print verion
-printf "version of historian setup ${DOCKER_GENERAL_VERSION}\n"
-
-#Check number of args
-if [ $# -lt 1 ]; then
-    printf "use at least one(1) argument\n\n"
+# include external libs from git submodule
+if [ -f  ./posix-lib-utils/standard_lib.sh ]; then
+    . ./posix-lib-utils/docker_lib.sh
+else
+    printf "$0: external libs not found - exit."
     exit 1
 fi
+
+# print header
+print_header "setup docker historian"
+
+
+# load enviroment variables
+log -info "load environment variables"
+. ./.env
+
+# print verion
+log -info "version of historian setup ${DOCKER_GENERAL_VERSION}"
+
+# check number of args
+check_args 1
 
 #Parameter/Arguments
 option=$1
 
-#Main Functions
+# main Functions
 main() {
 
-    #Check Inputargs
+    #check inputargs
     case $option in
             --test)
-                printf "test Command for debugging $0\n"
+                log -info "test Command for debugging $0"
                 test_configuration
                 ;;
 
             --setup)
-                printf "setup historian...\n"
+                log -info "setup historian"
                 check_requirements
                 create_config_files
                 docker_setup_images
                 ;;
 
             --config)
-                printf "create config files...\n"
+                log -info "create config files"
                 check_requirements
                 create_config_files
                 ;;
 
             --start)
                 check_requirements
-                printf "start historian...\n"
+                log -info "start historian"
                 docker_compose_start
                 ;;
 
             --stop)
                 check_requirements
-                printf "stop historian...\n"
+                log -info "stop historian"
                 docker_compose_stop
                 ;;
 
             --reset)
                 check_requirements
-                printf "reset historian...\n"
+                log -info "reset historian"
                 docker_compose_reset
                 ;;
 
             --delete)
                 check_requirements
-                printf "delete historian...\n"
+                log -info "delete historian"
                 docker_delete_data
-                historian_delete_data
+                docker_delete_local_data
                 ;;
 
             --state)
@@ -75,24 +83,24 @@ main() {
                 ;;
 
             --help | --info | *)
-                printf  "usage:\n \
-                        test:      test command\n \
-                        setup:     create historian\n \
-                        start:     start historian\n \
-                        delete:    delete historian\n \
-                        config:    create config files\n \
-                        state:     check docker state\n \
-                        help:      help\n\n" 
-                ;;
+                usage   "\-\-test:              test command" \
+                        "\-\-setup:             setup historian" \
+                        "\-\-start:             start container" \
+                        "\-\-stop:              stop container" \
+                        "\-\-reset:             reset container" \
+                        "\-\-delete:            delete docker data" \
+                        "\-\-state:             state of docker system" \
+                        "\-\-help:              help"
+                ;; 
     esac
 }
 
-#create config files
+# create config files
 create_config_files(){
 
-    printf "create config files\n"
+    log -info "create config files"
 
-#write mosquitto.conf
+# write mosquitto.conf
     cat << EOF > ${DOCKER_MQTT_VOLUME}/config/${DOCKER_MQTT_CONFIGFILE}
 #standard configuration
 allow_anonymous true
@@ -114,235 +122,140 @@ EOF
 
 }
 
-#docker check state
-docker_check_state() {
-
-    printf "\nlist active container\n"
-    docker ps -a
-
-    printf "\nlist active images\n"
-    docker images
-
-    printf "\nlist active networks\n"
-    docker network ls
-
-    printf "\nlist active volumes\n"
-    docker volume ls
-
-}
-
-#docker compose reset
-docker_compose_reset() {
-    printf "docker compose reset\n"
-
-    docker compose restart
-}
-
-#docker compose stop
-docker_compose_stop() {
-    printf "docker compose stop\n"
-
-    docker compose stop
-}
-
-#docker compose start
-docker_compose_start() {
-    printf "docker compose start\n"
-
-    docker compose start
-}
-
-#setup docker
-docker_setup_system() {
-
-    #add gpg key
-    printf "add docker official gpg key\n"
-    continue_yes_no
-    apt-get update
-    apt-get install ca-certificates curl
-    install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-    chmod a+r /etc/apt/keyrings/docker.asc
-
-    #add repo to sources
-    printf "add repo to sources...\n"
-    continue_yes_no
-    echo \
-    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
-    $(. /etc/os-release && echo "${VERSION_CODENAME}") stable" | \
-    tee /etc/apt/sources.list.d/docker.list > /dev/null
-    apt-get update
-
-    #install software
-    printf "install docker software...\n"
-    continue_yes_no
-    sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-    #test docker
-    printf "test docker system with hello world...\n\n"
-    continue_yes_no
-    docker run hello-world
-
-}
-
-#setup docker images
+# setup docker images
 docker_setup_images() {
 
-    printf "setup docker images...\n"
+    log -info "setup docker images"
 
-    #docker mosquitto image
-    printf "docker mosquitto...\n"
+    # convert relative path to absolute
+    log -info "convert raltive to absolute path docker mosquitto"
+    DOCKER_MQTT_VOLUME=$(echo ${DOCKER_MQTT_VOLUME} | sed -e  's|^./|'"$(pwd)/"'|g')
+
+
+    # docker mosquitto image
+    log -info "docker mosquitto"
     docker run -d \
-        -p ${DOCKER_MQTT_BROKER_PORT}:${DOCKER_MQTT_BROKER_PORT} -p ${DOCKER_MQTT_WEBSOCKET_PORT}:${DOCKER_MQTT_WEBSOCKET_PORT} \
+        -p ${DOCKER_MQTT_BROKER_PORT}:1883 -p ${DOCKER_MQTT_WEBSOCKET_PORT}:9001 \
         --name mosquitto \
         -v ${DOCKER_MQTT_VOLUME}/config/${DOCKER_MQTT_CONFIGFILE}:/mosquitto/config/mosquitto.conf \
         -v ${DOCKER_MQTT_VOLUME}/data:/mosquitto/data \
         -v ${DOCKER_MQTT_VOLUME}/log:/mosquitto/log \
-        --env-file "./docker-compose.env" \
+        --env-file "./.env" \
         eclipse-mosquitto
 
     sleep 2
     docker ps -a
-    printf "was docker mosquitto successful ?\n"
+    log -info "was docker mosquitto successful ?"
     continue_yes_no
 
-    #docker influxdbv2 image
-    printf "docker influxdb...\n"
+    # convert relative path to absolute
+    log -info "convert raltive to absolute path docker influxdb"
+    DOCKER_INFLUXDB_VOLUME=$(echo ${DOCKER_INFLUXDB_VOLUME} | sed -e  's|^./|'"$(pwd)/"'|g')
+
+    # docker influxdbv2 image
+    log -info "docker influxdb"
     docker run -d \
-        -p ${DOCKER_INFLUXDB_PORT}:${DOCKER_INFLUXDB_PORT} \
+        -p ${DOCKER_INFLUXDB_PORT}:8086 \
         --name influxdb2 \
-        -v ${DOCKER_INFLUXDB_DATA}:/var/lib/influxdb2 \
-        -v ${DOCKER_INFLUXDB_CONFIG}:/etc/influxdb2 \
-        --env-file "./docker-compose.env" \
+        -v ${DOCKER_INFLUXDB_VOLUME}/data:/var/lib/influxdb2 \
+        -v ${DOCKER_INFLUXDB_VOLUME}/config:/etc/influxdb2 \
+        --env-file "./.env" \
         influxdb:latest
 
     sleep 2
     docker ps -a
-    printf "was docker influxdb successful ?\n"
-    printf "check installation http://localhost:8086/\n\n"
+    log -info "was docker influxdb successful ?"
+    log -info "check installation http://localhost:8086/"
     continue_yes_no
 
+
+    # convert relative path to absolute
+    log -info "convert raltive to absolute path docker telegraf"
+    DOCKER_TELEGRAF_VOLUME=$(echo ${DOCKER_TELEGRAF_VOLUME} | sed -e  's|^./|'"$(pwd)/"'|g')
+
     #docker telegraf image
-    printf "docker telegraf...\n"
+    log -info "docker telegraf"
     docker run -d \
         --name telegraf \
         -v ${DOCKER_TELEGRAF_VOLUME}/config/${DOCKER_TELEGRAF_CONFIGFILE}:/etc/telegraf/telegraf.conf:ro \
-        --env-file "./docker-compose.env" \
+        --env-file "./.env" \
         telegraf
 
     sleep 2
     docker ps -a
-    printf "was docker telegraf successful ?\n"
+    log -info "was docker telegraf successful ?"
     continue_yes_no
 
+
+    # convert relative path to absolute
+    log -info "convert raltive to absolute path docker grafana"
+    DOCKER_GRAFANA_VOLUME=$(echo ${DOCKER_GRAFANA_VOLUME} | sed -e  's|^./|'"$(pwd)/"'|g')
+
     #docker grafana image
-    printf "docker grafana...\n"
+    log -info "docker grafana"
     docker run -d \
         --name=grafana \
-        -p ${DOCKER_GRAFANA_PORT}:${DOCKER_GRAFANA_PORT} \
+        -p ${DOCKER_GRAFANA_PORT}:3000 \
         -v ${DOCKER_GRAFANA_VOLUME}/data:/var/lib/grafana \
-        --env-file "./docker-compose.env" \
+        --env-file "./.env" \
         grafana/grafana
 
     sleep 2
     docker ps -a
-    printf "was docker grafana successful ?\n"
+    log -info "was docker grafana successful ?"
     continue_yes_no
 }
 
+# delete productive files
+docker_delete_local_data() {
 
-#delete docker data
-docker_delete_data() {
+    log -info "delete prductive data"
 
-    printf "try shutdown all instances\n"
-    docker compose down
-
-    printf "reset docker instances\n"
-    docker rm -f $(docker ps -a -q)
-    docker rmi $(docker images -a -q)
-    docker network rm $(docker network ls -q)
-    docker volume rm $(docker volume ls -q)
-
-    printf "running instances\n"
-    docker ps -a
-    printf "available offline images\n"
-    docker images
-
-}
-#delete productive files
-historian_delete_data() {
-
-    printf "delete prductive data\n"
-
-    #remove mosquitto data
+    # remove mosquitto data
     if [ -d ${DOCKER_MQTT_VOLUME} ] && \
         [ ! ${DOCKER_MQTT_VOLUME} = "/" ] && \
         [ ! -z ${DOCKER_MQTT_VOLUME} ]; then
-            printf "delete filed in ${DOCKER_MQTT_VOLUME}\n"
+            log -info "delete filed in ${DOCKER_MQTT_VOLUME}"
             rm -r ${DOCKER_MQTT_VOLUME}/data/*
             rm -r ${DOCKER_MQTT_VOLUME}/log/*
     fi
 
-    #remove influxdbv2 data
+    # remove influxdbv2 data
     if [ -d ${DOCKER_INFLUXDB_VOLUME} ] && \
         [ ! ${DOCKER_INFLUXDB_VOLUME} = "/" ] && \
         [ ! -z ${DOCKER_INFLUXDB_VOLUME} ]; then
-            printf "delete filed in ${DOCKER_INFLUXDB_VOLUME}\n"
+            log -info "delete filed in ${DOCKER_INFLUXDB_VOLUME}"
             rm -r ${DOCKER_INFLUXDB_VOLUME}/data/*
             rm -r ${DOCKER_INFLUXDB_VOLUME}/config/*
     fi
 
-    #remove grafana data
+    # remove grafana data
     if [ -d ${DOCKER_GRAFANA_VOLUME} ] && \
         [ ! ${DOCKER_GRAFANA_VOLUME} = "/" ] && \
         [ ! -z ${DOCKER_INFLUXDB_VOLUME} ]; then
-            printf "delete filed in ${DOCKER_GRAFANA_VOLUME}\n"
+            log -info "delete filed in ${DOCKER_GRAFANA_VOLUME}"
             rm -r ${DOCKER_GRAFANA_VOLUME}/data/*
     fi
 
 }
 
-#yes/no to continue
-continue_yes_no() {
-
-    while true; do
-        read -p "continue setup [y]es or [n]o ?" result
-        case ${result} in
-            [Yy]* ) make install; break;;
-            [Nn]* ) exit;;
-            * ) printf "only [y]es or [n]o.\n";;
-        esac
-    done
-
-}
-
-
-#Check requirements
+# Check requirements
 check_requirements() {
 
-    #check root
-    if [ $(id -u) -ne 0 ]; then
-        printf "usage: run '$0' as sudo\n"
-        exit 1
-    fi
+    # check root
+    check_root
 
-    #Check Command
+    # Check Command
     if command -v docker >/dev/null 2>&1 ; then
-        printf "docker found OK\n"
+        log -info "docker found OK"
     else
-        printf "docker not found MISSING\n"
+        log -info "docker not found MISSING"
 
         #install docker system or abort
-        printf "install docker system [y] or abort [n] setup ?\n"
+        log -info "install docker system [y] or abort [n] setup ?"
         continue_yes_no
         docker_setup_system
     fi 
-}
-
-#test configuration
-test_configuration() {
-
-    printf "test configuration\n"
 }
 
 #call main Function manually - if not need uncomment

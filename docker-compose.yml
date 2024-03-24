@@ -1,4 +1,4 @@
-version: "3"
+version: 3
 
 services:
   eclipse-mosquitto:
@@ -8,12 +8,12 @@ services:
       - ./.env
     restart: unless-stopped
     ports:
-      - "${DOCKER_MQTT_BROKER_PORT}:${DOCKER_MQTT_BROKER_PORT}"
-      - "${DOCKER_MQTT_WEBSOCKET_PORT}:${DOCKER_MQTT_WEBSOCKET_PORT}"
+      - ${DOCKER_MQTT_BROKER_PORT}:1883
+      - ${DOCKER_MQTT_WEBSOCKET_PORT}:9001
     volumes:
-      - "${DOCKER_MQTT_VOLUME}/config/${DOCKER_MQTT_CONFIGFILE}:/mosquitto/config/mosquitto.conf"
-      - "${DOCKER_MQTT_VOLUME}/data:/mosquitto/data"
-      - "${DOCKER_MQTT_VOLUME}/log:/mosquitto/log"
+      - ${DOCKER_MQTT_VOLUME}/config/${DOCKER_MQTT_CONFIGFILE}:/mosquitto/config/mosquitto.conf
+      - ${DOCKER_MQTT_VOLUME}/data:/mosquitto/data
+      - ${DOCKER_MQTT_VOLUME}/log:/mosquitto/log
     
   influxdb2:
     container_name: influxdb2
@@ -25,10 +25,10 @@ services:
         condition: service_started
     restart: unless-stopped
     ports:
-      - "${DOCKER_INFLUXDB_PORT}:${DOCKER_INFLUXDB_PORT}"
+      - ${DOCKER_INFLUXDB_PORT}:8086
     volumes:
-      - "${DOCKER_INFLUXDB_VOLUME}/data:/var/lib/influxdb2"
-      - "${DOCKER_INFLUXDB_VOLUME}/config:/etc/influxdb2"
+      - ${DOCKER_INFLUXDB_VOLUME}/data:/var/lib/influxdb2
+      - ${DOCKER_INFLUXDB_VOLUME}/config:/etc/influxdb2
       
   telegraf:
     container_name: telegraf
@@ -42,7 +42,7 @@ services:
         condition: service_started
     restart: unless-stopped  
     volumes:
-      - "${DOCKER_TELEGRAF_VOLUME}/config/${DOCKER_TELEGRAF_CONFIGFILE}:/etc/telegraf/telegraf.conf:ro"
+      - ${DOCKER_TELEGRAF_VOLUME}/config/${DOCKER_TELEGRAF_CONFIGFILE}:/etc/telegraf/telegraf.conf:ro
     
   grafana:
     container_name: grafana
@@ -54,7 +54,7 @@ services:
         condition: service_started
     restart: unless-stopped
     ports:
-      - "${DOCKER_GRAFANA_PORT}:${DOCKER_GRAFANA_PORT}"
+      - ${DOCKER_GRAFANA_PORT}:3000
     volumes:
-      - "${DOCKER_GRAFANA_VOLUME}/data:/var/lib/grafana"
+      - ${DOCKER_GRAFANA_VOLUME}/data:/var/lib/grafana
 
