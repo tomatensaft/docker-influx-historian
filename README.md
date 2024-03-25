@@ -45,6 +45,7 @@ historize data from twincat plc with mqtt, influxdb2 and grafana
 * not testet completly
   
 ---
+## version
 *[v0.1.0]*
 
 
