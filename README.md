@@ -2,10 +2,12 @@
 historize data from twincat plc with mqtt, influxdb2 and grafana
 
 ## contents
-* [installation](#installation)
-* [usage](#usage)
-* [tests](#tests)
-* [version](#version)
+- [docker-influx-historian :whale:](#docker-influx-historian-whale)
+  - [contents](#contents)
+  - [installation](#installation)
+  - [usage](#usage)
+  - [resources](#resources)
+  - [tests](#tests)
 
 ## installation
 * install docker for linux or wsl
