@@ -1,15 +1,17 @@
-##!/bin/sh
+#!/bin/sh
+#SPDX-License-Identifier: MIT
 
 #set -x
 
-# set absolute path of root app for global use
-SCRIPT_ROOT_PATH=$(pwd)
+# set absolute path of root app for global use - relative path from this point
+# ${PWD%/*} -> one folder up / ${PWD%/*/*} -> two folders up 
+SCRIPT_ROOT_PATH="${PWD%/*}/posix-lib-utils"
 
-# include external libs from git submodule
-if [ -f  ./posix-lib-utils/standard_lib.sh ]; then
-    . ./posix-lib-utils/docker_lib.sh
+# test include external libs from debian submodule
+if [ -f  ${SCRIPT_ROOT_PATH}/docker_lib.sh ]; then
+    . ${SCRIPT_ROOT_PATH}/docker_lib.sh
 else
-    printf "$0: external libs not found - exit."
+    printf "$0: docker external libs not found - exit.\n"
     exit 1
 fi
 
