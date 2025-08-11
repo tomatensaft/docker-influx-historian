@@ -12,6 +12,7 @@ historize data from twincat plc with mqtt, influxdb2 and grafana
 ## installation
 * install docker for linux or wsl
 * adjust environment settings for and `.env`
+* generate certificates with `certs/generate_certs.sh`
 * test configuration with `setup-historian.sh --test`
 * generate config files and missing folders `setup-historian.sh --config`
 * docker compose configuration you will find `docker-compose.yml` 
